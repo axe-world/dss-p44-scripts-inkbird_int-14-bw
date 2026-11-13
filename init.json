@@ -1,0 +1,257 @@
+{
+  "message": "init",
+  "protocol": "json",
+  "name": "INKBIRD INT-14-BW",
+  "vendorname": "INKBIRD",
+  "modelname": "INT-14-BW",
+  "group": 8,
+  "colorclass": 8,
+  "sensors": [
+    {
+      "id": "probe1_core",
+      "hardwarename": "Sonde 1 Kern",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe1_ambient",
+      "hardwarename": "Sonde 1 Umgebung",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe1_target",
+      "hardwarename": "Sonde 1 Zieltemperatur",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe2_core",
+      "hardwarename": "Sonde 2 Kern",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe2_ambient",
+      "hardwarename": "Sonde 2 Umgebung",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe2_target",
+      "hardwarename": "Sonde 2 Zieltemperatur",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe3_core",
+      "hardwarename": "Sonde 3 Kern",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe3_ambient",
+      "hardwarename": "Sonde 3 Umgebung",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe3_target",
+      "hardwarename": "Sonde 3 Zieltemperatur",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe4_core",
+      "hardwarename": "Sonde 4 Kern",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe4_ambient",
+      "hardwarename": "Sonde 4 Umgebung",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    },
+    {
+      "id": "probe4_target",
+      "hardwarename": "Sonde 4 Zieltemperatur",
+      "sensortype": 1,
+      "usage": 1,
+      "group": 8,
+      "min": -20,
+      "max": 300,
+      "resolution": 0.1,
+      "updateinterval": 10,
+      "alivesigninterval": 300
+    }
+  ],
+  "states": {
+    "KerntempSonde1": {
+      "type": "enumeration",
+      "values": [
+        "!Nicht erreicht",
+        "Erreicht"
+      ],
+      "description": "Sonde 1: Internal High Alarm (Cook Done)"
+    },
+    "KerntempSonde2": {
+      "type": "enumeration",
+      "values": [
+        "!Nicht erreicht",
+        "Erreicht"
+      ],
+      "description": "Sonde 2: Internal High Alarm (Cook Done)"
+    },
+    "KerntempSonde3": {
+      "type": "enumeration",
+      "values": [
+        "!Nicht erreicht",
+        "Erreicht"
+      ],
+      "description": "Sonde 3: Internal High Alarm (Cook Done)"
+    },
+    "KerntempSonde4": {
+      "type": "enumeration",
+      "values": [
+        "!Nicht erreicht",
+        "Erreicht"
+      ],
+      "description": "Sonde 4: Internal High Alarm (Cook Done)"
+    },
+    "BatterieSonde1": {
+      "type": "enumeration",
+      "values": [
+        "!OK",
+        "Aufladen"
+      ],
+      "description": "Sonde 1: Batteriealarm aus FF03 (Bit 14; experimentell)"
+    },
+    "BatterieSonde2": {
+      "type": "enumeration",
+      "values": [
+        "!OK",
+        "Aufladen"
+      ],
+      "description": "Sonde 2: Batteriealarm aus FF03 (Bit 14; experimentell)"
+    },
+    "BatterieSonde3": {
+      "type": "enumeration",
+      "values": [
+        "!OK",
+        "Aufladen"
+      ],
+      "description": "Sonde 3: Batteriealarm aus FF03 (Bit 14; experimentell)"
+    },
+    "BatterieSonde4": {
+      "type": "enumeration",
+      "values": [
+        "!OK",
+        "Aufladen"
+      ],
+      "description": "Sonde 4: Batteriealarm aus FF03 (Bit 14; experimentell)"
+    }
+  },
+  "events": {
+    "KerntempSonde1Erreicht": {
+      "description": "Sonde 1: Kerntemperatur erreicht (Internal High Alarm)",
+      "type": "boolean"
+    },
+    "KerntempSonde2Erreicht": {
+      "description": "Sonde 2: Kerntemperatur erreicht (Internal High Alarm)",
+      "type": "boolean"
+    },
+    "KerntempSonde3Erreicht": {
+      "description": "Sonde 3: Kerntemperatur erreicht (Internal High Alarm)",
+      "type": "boolean"
+    },
+    "KerntempSonde4Erreicht": {
+      "description": "Sonde 4: Kerntemperatur erreicht (Internal High Alarm)",
+      "type": "boolean"
+    },
+    "BatterieSonde1Aufladen": {
+      "type": "boolean",
+      "description": "Sonde 1: Batteriealarm (OK -> Aufladen)"
+    },
+    "BatterieSonde2Aufladen": {
+      "type": "boolean",
+      "description": "Sonde 2: Batteriealarm (OK -> Aufladen)"
+    },
+    "BatterieSonde3Aufladen": {
+      "type": "boolean",
+      "description": "Sonde 3: Batteriealarm (OK -> Aufladen)"
+    },
+    "BatterieSonde4Aufladen": {
+      "type": "boolean",
+      "description": "Sonde 4: Batteriealarm (OK -> Aufladen)"
+    }
+  },
+  "output": "basic",
+  "oemmodelguid": "gs1:(01)1234567890123"
+}

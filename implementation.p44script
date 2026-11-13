@@ -1,0 +1,202 @@
+// INKBIRD INT-14-BW - plan44 / digitalSTROM
+// Vier unabhaengige Batteriesonden mit eigenen States/Events
+// Voraussetzung: INKBIRD NimBLE ESP32-Firmware
+// HTTP-Endpunkt: /api/plan44
+//
+// 12 Sensoren: pro Sonde Kern, Umgebung, Zieltemperatur
+// 4 Batterie-States + 4 Events BatterieSonde1Aufladen..BatterieSonde4Aufladen
+// 4 Cook-Done-States + 4 Events bei echtem Wechsel Nicht erreicht -> Erreicht
+// Polling 10 s; Sensorwerte nur bei Aenderung oder 300 s Lebenszeichen
+//
+// WICHTIG:
+// Ein beim Start bereits aktiver Alarm aktualisiert den State,
+// loest aber KEIN Event aus (wie bei der Klafs-Integration).
+// Events werden als EIGENE pushNotification-Nachricht gesendet.
+// Keine ternären JavaScript-Kurzformen verwenden.
+
+var gatewayUrl = 'http://192.168.1.1/api/plan44'; // ESP32-IP anpassen
+
+var lastValues = [null,null,null,null,null,null,null,null,null,null,null,null];
+var initialized = [false,false,false,false,false,false,false,false,false,false,false,false];
+var lastOnline = null;
+var lastCookDone = [null,null,null,null];
+var lastBatteryAlarm = [null,null,null,null];
+var cyclesSinceRefresh = 0;
+var probeIds = ['probe1','probe2','probe3','probe4'];
+
+// Eigener Name wichtig: Kollision mit einer sendSensor-Funktion vermeiden.
+function inkbirdPublishSensorValue(index, value, force) {
+  if (!initialized[index] || force || lastValues[index] != value) {
+    message({message:'sensor', index:index, value:value});
+    lastValues[index] = value;
+    initialized[index] = true;
+  }
+}
+
+// Wie bei Klafs: State und Event strikt getrennt senden.
+function inkbirdPushState(stateName, stateValue) {
+  var stateChanges = {};
+  stateChanges[stateName] = stateValue;
+  message({message:'pushNotification', statechange:stateChanges});
+  log(6, 'INKBIRD STATE ' + stateName + ' = ' + stateValue);
+}
+
+function inkbirdPushEvent(eventName) {
+  message({message:'pushNotification', events:[eventName]});
+  log(5, 'INKBIRD EVENT gesendet: ' + eventName);
+}
+
+function inkbirdSendOffline() {
+  if (lastOnline != false) {
+    message({message:'opstate', level:0, text:'INKBIRD offline'});
+    lastOnline = false;
+    log(5, 'INKBIRD offline');
+  }
+  for (var i = 0; i < 12; i++) {
+    inkbirdPublishSensorValue(i, null, false);
+  }
+  // State-Historie absichtlich behalten. Ohne neue gueltige
+  // BLE-Alarmdaten darf kein neues Event erfunden werden.
+}
+
+function inkbirdPollGateway() {
+  cyclesSinceRefresh = cyclesSinceRefresh + 1;
+  var force = false;
+  if (cyclesSinceRefresh >= 30) {
+    force = true;
+    cyclesSinceRefresh = 0;
+  }
+
+  try {
+    var response = httprequest({url:gatewayUrl, method:'GET', timeout:5, withmeta:true});
+    if (response.status != 200) {
+      throw 'ESP32 HTTP ' + response.status;
+    }
+    var data = json(response.data);
+    if (data.online != true || data.authenticated != true) {
+      throw 'ESP32 nicht online oder nicht authentifiziert';
+    }
+    if (!isvalid(data.age_ms) || data.age_ms > 60000) {
+      throw 'Temperaturdaten veraltet';
+    }
+
+    // Die 12 Temperatursensoren: Indizes 0..11
+    for (var j = 0; j < 4; j++) {
+      var prefix = probeIds[j];
+      var active = data[prefix + '_active'];
+      var core = data[prefix + '_core'];
+      var ambient = data[prefix + '_ambient'];
+      var target = data[prefix + '_target'];
+      var coreIndex = j * 3;
+      var ambientIndex = coreIndex + 1;
+      var targetIndex = coreIndex + 2;
+
+      if (active == true) {
+        if (isvalid(core) && core != null) {
+          inkbirdPublishSensorValue(coreIndex, core, force);
+        }
+        else {
+          inkbirdPublishSensorValue(coreIndex, null, force);
+        }
+        if (isvalid(ambient) && ambient != null) {
+          inkbirdPublishSensorValue(ambientIndex, ambient, force);
+        }
+        else {
+          inkbirdPublishSensorValue(ambientIndex, null, force);
+        }
+      }
+      else {
+        inkbirdPublishSensorValue(coreIndex, null, force);
+        inkbirdPublishSensorValue(ambientIndex, null, force);
+      }
+
+      // Zieltemperatur ist auch bei nicht eingesteckter Sonde gespeichert.
+      if (isvalid(target) && target != null) {
+        inkbirdPublishSensorValue(targetIndex, target, force);
+      }
+      else {
+        inkbirdPublishSensorValue(targetIndex, null, force);
+      }
+    }
+
+    // Cook Done: ausschliesslich FF03-Flag aus ESP32, kein Ist/Soll-Vergleich.
+    for (var k = 0; k < 4; k++) {
+      var cookValue = data[probeIds[k] + '_cook_done'];
+      if (isvalid(cookValue) && cookValue != null) {
+        var currentCookDone = false;
+        if (cookValue == true) {
+          currentCookDone = true;
+        }
+
+        var previousCookDone = lastCookDone[k];
+        if (previousCookDone == null || previousCookDone != currentCookDone) {
+          var stateName = 'KerntempSonde' + (k + 1);
+          var eventName = 'KerntempSonde' + (k + 1) + 'Erreicht';
+
+          if (currentCookDone == true) {
+            inkbirdPushState(stateName, 'Erreicht');
+            if (previousCookDone == false) {
+              // Echtes 0 -> 1 nach bekanntem Ausgangszustand.
+              inkbirdPushEvent(eventName);
+            }
+            else {
+              log(5, 'INKBIRD ' + stateName + ' bereits bei Start Erreicht; kein Initial-Event');
+            }
+          }
+          else {
+            inkbirdPushState(stateName, 'Nicht erreicht');
+          }
+          lastCookDone[k] = currentCookDone;
+        }
+      }
+    }
+
+    // Batteriealarm pro Sonde: FF03 Bit 14. Kein aggregierter State.
+    // Unbekannte oder veraltete FF03-Werte (null) werden ignoriert.
+    for (var b = 0; b < 4; b++) {
+      var batteryValue = data[probeIds[b] + '_battery_alarm'];
+      if (isvalid(batteryValue) && batteryValue != null) {
+        var currentBatteryAlarm = false;
+        if (batteryValue == true) {
+          currentBatteryAlarm = true;
+        }
+
+        var previousBatteryAlarm = lastBatteryAlarm[b];
+        if (previousBatteryAlarm == null || previousBatteryAlarm != currentBatteryAlarm) {
+          var batteryStateName = 'BatterieSonde' + (b + 1);
+          var batteryEventName = 'BatterieSonde' + (b + 1) + 'Aufladen';
+
+          if (currentBatteryAlarm == true) {
+            inkbirdPushState(batteryStateName, 'Aufladen');
+            if (previousBatteryAlarm == false) {
+              // Nur echter Uebergang von bekanntem OK zu Aufladen.
+              inkbirdPushEvent(batteryEventName);
+            } else {
+              log(5, 'INKBIRD ' + batteryStateName + ' bei Start bereits Aufladen; kein Initial-Event');
+            }
+          } else {
+            inkbirdPushState(batteryStateName, 'OK');
+          }
+          lastBatteryAlarm[b] = currentBatteryAlarm;
+        }
+      }
+    }
+
+    if (lastOnline != true) {
+      message({message:'opstate', level:100, text:'INKBIRD verbunden'});
+      lastOnline = true;
+      log(5, 'INKBIRD verbunden');
+    }
+  }
+  catch as err {
+    log(4, 'INKBIRD Gateway-Abfrage fehlgeschlagen: %s', err);
+    inkbirdSendOffline();
+  }
+}
+
+// Alle Werte beim Start initial lesen, danach alle 10 Sekunden.
+inkbirdPollGateway();
+on (every(0:00:10)) {
+  inkbirdPollGateway();
+}
+return true;
