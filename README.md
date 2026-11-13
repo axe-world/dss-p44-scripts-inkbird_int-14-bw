@@ -1,0 +1,1 @@
+Arduino Script-Firmware + Plan44 Scripts, um mittels einem Espressif ESP32 via BLE die Sensordaten von Inkbird INT-BW-14 abzurufen und via web api de Plan44 Script zur Verfügung zu stellen für Integration in DigitalStrom smarthome System.
